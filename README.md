@@ -1,1 +1,0 @@
-# groupF-fullstack-app
