@@ -108,7 +108,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
 
         function register() {
             const account = body;
-
+        
             if (accounts.find(x => x.email === account.email)) {
                 // display email already registered "email" in alert
                 setTimeout(() => {
@@ -119,11 +119,11 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                         <div><strong>NOTE:</strong> The fake backend displayed this "email" so you can test without an api. A real backend would send a real email.</div>
                     `, { autoClose: false });
                 }, 1000);
-
+        
                 // always return ok() response to prevent email enumeration
                 return ok();
             }
-
+        
             // assign account id and a few other properties then save
             account.id = newAccountId();
             if (account.id === 1) {
@@ -139,21 +139,31 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             delete account.confirmPassword;
             accounts.push(account);
             localStorage.setItem(accountsKey, JSON.stringify(accounts));
-
-            // display verification email in alert
+        
+            // display alert depending on whether it's the first (admin) account or not
             setTimeout(() => {
-                const verifyUrl = `${location.origin}/account/verify-email?token=${account.verificationToken}`;
-                alertService.info(`
-                    <h4>Verification Email</h4>
-                    <p>Thanks for registering!</p>
-                    <p>Please click the below link to verify your email address:</p>
-                    <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-                    <div><strong>NOTE:</strong> The fake backend displayed this "email" so you can test without an api. A real backend would send a real email.</div>
-                `, { autoClose: false });
+                if (account.role === Role.Admin) {
+                    alertService.success(`
+                        <h4>Admin Registration Successful</h4>
+                        <p>Welcome, Admin! You can login directly without verification.</p>
+                        <div><strong>NOTE:</strong> This is shown because you're the first registered user.</div>
+                    `, { autoClose: false });
+                    account.isVerified = true; // auto-verify admin so they can log in immediately
+                    localStorage.setItem(accountsKey, JSON.stringify(accounts));
+                } else {
+                    const verifyUrl = `${location.origin}/account/verify-email?token=${account.verificationToken}`;
+                    alertService.info(`
+                        <h4>Verification Email</h4>
+                        <p>Thanks for registering!</p>
+                        <p>Please click the below link to verify your email address:</p>
+                        <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+                        <div><strong>NOTE:</strong> The fake backend displayed this "email" so you can test without an api. A real backend would send a real email.</div>
+                    `, { autoClose: false });
+                }
             }, 1000);
-
+        
             return ok();
-        }
+        }        
         
         function verifyEmail() {
             const { token } = body;
